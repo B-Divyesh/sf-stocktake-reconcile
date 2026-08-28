@@ -1,4 +1,4 @@
-# Handoff — Stocktake Reconcile v0.1.1
+# Handoff — Stocktake Reconcile v0.1.3
 
 ## Delivered
 
@@ -27,7 +27,7 @@ Results: 4 unit tests pass; 2 Playwright tests pass (full count-to-export-ready 
 
 ## How to release
 
-After CI passes, tag and push `v0.1.1`; `.github/workflows/release.yml` builds and publishes the release. The release job generates `SHA256SUMS` and `latest.json`; the landing page uses GitHub's CORS-enabled public release API to select the matching platform asset while the release contains `latest.json` for the install scripts.
+After CI passes, tag and push `v0.1.3`; `.github/workflows/release.yml` builds and publishes the release. The release job generates `SHA256SUMS` and `latest.json`; the landing page uses GitHub's CORS-enabled public release API to select the matching platform asset while the release contains `latest.json` for the install scripts.
 
 ## Needs operator action
 
