@@ -1,10 +1,15 @@
 import { createHash } from 'node:crypto'
-import { readdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { copyFile, readdir, readFile, writeFile } from 'node:fs/promises'
+import { basename, join } from 'node:path'
 
 const [directory, version, repository] = process.argv.slice(2)
 if (!directory || !version || !repository) throw new Error('usage: release-manifest <asset-dir> <version> <owner/repo>')
-const files = (await readdir(directory)).filter(file => !['SHA256SUMS', 'latest.json'].includes(file))
+// download-artifact preserves a directory for each matrix artifact. Flatten only
+// release bundles so the checksum file and action-gh-release have one stable root.
+const nested = (await readdir(directory, { recursive: true })).filter(file => /\.(dmg|msi|exe|AppImage|deb)$/i.test(file))
+if (!nested.length) throw new Error('no desktop bundles found')
+for (const relative of nested) await copyFile(join(directory, relative), join(directory, basename(relative)))
+const files = [...new Set(nested.map(basename))]
 const hashes = await Promise.all(files.map(async file => `${createHash('sha256').update(await readFile(join(directory, file))).digest('hex')}  ${file}`))
 await writeFile(join(directory, 'SHA256SUMS'), `${hashes.sort().join('\n')}\n`)
 const base = `https://github.com/${repository}/releases/download/${version}/`
