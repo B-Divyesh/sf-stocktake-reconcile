@@ -1,0 +1,24 @@
+{
+  "name": "stocktake-reconcile",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build:app": "vite build --mode app",
+    "build:site": "vite build --mode site",
+    "build": "npm run build:site",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "playwright test",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.1",
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "1.58.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7",
+    "vitest": "^3.2.4"
+  }
+}

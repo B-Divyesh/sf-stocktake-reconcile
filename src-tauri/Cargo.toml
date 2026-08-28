@@ -1,0 +1,16 @@
+[package]
+name = "stocktake-reconcile"
+version = "0.1.0"
+description = "Local-first stocktake reconciliation"
+authors = ["Sociobot"]
+edition = "2021"
+
+[lib]
+name = "stocktake_reconcile_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

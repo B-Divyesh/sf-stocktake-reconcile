@@ -1,0 +1,23 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Stocktake Reconcile",
+  "version": "0.1.0",
+  "identifier": "in.sociobot.stocktake-reconcile",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "npm run build:app",
+    "frontendDist": "../dist/app"
+  },
+  "app": {
+    "windows": [{ "title": "Stocktake Reconcile", "width": 1280, "height": 840, "minWidth": 390, "minHeight": 600 }],
+    "security": { "csp": "default-src 'self'; img-src 'self' data:; connect-src 'self' https://api.sociobot.in https://github.com; style-src 'self' 'unsafe-inline';" }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Business",
+    "shortDescription": "Local-first stocktake reconciliation",
+    "longDescription": "Compare expected stock to physical counts and export auditable variance adjustments without sending inventory data anywhere."
+  }
+}
