@@ -8,8 +8,9 @@ if (!directory || !version || !repository) throw new Error('usage: release-manif
 // release bundles so the checksum file and action-gh-release have one stable root.
 const nested = (await readdir(directory, { recursive: true })).filter(file => /\.(dmg|msi|exe|AppImage|deb)$/i.test(file))
 if (!nested.length) throw new Error('no desktop bundles found')
-for (const relative of nested) await copyFile(join(directory, relative), join(directory, basename(relative)))
-const files = [...new Set(nested.map(file => basename(file)))]
+const releaseName = (file) => basename(file).replaceAll(' ', '.')
+for (const relative of nested) await copyFile(join(directory, relative), join(directory, releaseName(relative)))
+const files = [...new Set(nested.map(releaseName))]
 const hashes = await Promise.all(files.map(async file => `${createHash('sha256').update(await readFile(join(directory, file))).digest('hex')}  ${file}`))
 await writeFile(join(directory, 'SHA256SUMS'), `${hashes.sort().join('\n')}\n`)
 const base = `https://github.com/${repository}/releases/download/${version}/`
