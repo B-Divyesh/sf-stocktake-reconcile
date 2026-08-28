@@ -27,7 +27,7 @@ Results: 4 unit tests pass; 2 Playwright tests pass (full count-to-export-ready 
 
 ## How to release
 
-After CI passes, tag and push `v0.1.6`; `.github/workflows/release.yml` builds and publishes the release. The release job generates `SHA256SUMS` and `latest.json`; the landing page uses GitHub's CORS-enabled public release API to select the matching platform asset while the release contains `latest.json` for the install scripts.
+Published release: [v0.1.6](https://github.com/B-Divyesh/sf-stocktake-reconcile/releases/tag/v0.1.6). The GitHub Actions run completed successfully for macOS arm64/x86_64, Windows x64, and Linux x64. Its `latest.json` contains real per-platform release URLs; downloading the Windows MSI and comparing SHA-256 confirmed `5b76d25b5f0541c7653a6fedcf32d485ad1b773e86447033b2c1cb827edf61e8`, matching its `SHA256SUMS` entry. Future version tags run `.github/workflows/release.yml` to rebuild and publish the same artifact set.
 
 ## Needs operator action
 
