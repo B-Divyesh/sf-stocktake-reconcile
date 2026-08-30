@@ -1,0 +1,3 @@
+#!/bin/sh
+# linuxdeploy's GTK plugin may create the same compatibility link twice on newer GTK layouts.
+exec /usr/bin/ln -f "$@"

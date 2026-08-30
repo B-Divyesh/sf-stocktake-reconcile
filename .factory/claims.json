@@ -1,0 +1,7 @@
+[
+  {"id":"demo","claim":"Try it with sample data opens a three-line sample ledger in one click.","where":"landing primary action","test":"npm run test:ui -- --grep @claim:demo","sandbox":"fresh browser context at /; click Try it with sample data"},
+  {"id":"exact-quantities","claim":"Counts use exact decimal values without silent rounding.","where":"landing facts, workspace validation","test":"npm test -- -t @claim:exact-quantities","sandbox":"unit fixtures for decimal and integer values beyond Number.MAX_SAFE_INTEGER"},
+  {"id":"csv-export","claim":"Exports explained stock adjustments as CSV.","where":"landing how-it-works, workspace export","test":"npm run test:ui -- --grep @claim:csv-export","sandbox":"fresh /demo context; complete the sample and inspect the download"},
+  {"id":"inventory-local","claim":"Inventory data stays in this browser.","where":"landing facts, privacy page","test":"npm run test:ui -- --grep @claim:inventory-local","sandbox":"fresh /demo context; record every request through a completed count"},
+  {"id":"desktop-download","claim":"The landing page links to the detected platform package.","where":"landing download action","test":"npm run test:ui -- --grep @claim:desktop-download","sandbox":"fresh Linux browser context; assert the AppImage release URL"}
+]

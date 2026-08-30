@@ -1,45 +1,45 @@
 # Stocktake Reconcile
 
-Stocktake Reconcile is a local-first desktop utility for a tiny ecommerce, workshop, or stockroom operator. It turns an expected-stock CSV plus physical count into an explainable adjustment journal and an integrity-hashed count report. It does not sync inventory, post accounting entries, calculate tax, or send stock data anywhere.
+Stocktake Reconcile is a local-first desktop app for store teams who reconcile shelf counts with expected stock. It imports an expected-stock CSV, validates exact quantities, and exports reviewable adjustment files.
+
+Try the three-line sample at `/demo`. The demo is isolated in memory and is discarded when you start a real count.
 
 ## What it does
 
-- Imports `sku, name, expected, unit, unit_type, precision` CSVs.
-- Supports integer, decimal, and weight units; values beyond allowed precision are rejected rather than silently rounded.
-- Requires a reason for each non-zero variance.
-- Exports an adjustment CSV and JSON count report containing the immutable original CSV and SHA-256 hashes.
-- Runs as a Tauri 2 desktop app and has a static download page in `dist/site`.
+- Imports `sku, name, expected, unit, unit_type, precision` CSV files.
+- Uses scaled-integer arithmetic for integer, decimal, and weight quantities. It rejects negative physical counts and excess precision rather than rounding.
+- Requires a reason for every non-zero variance.
+- Exports an adjustment CSV and a JSON integrity report with an SHA-256 hash. The hash detects changes; it is not a digital signature.
+- Runs as a Tauri 2 desktop app. `npm run build:site` creates the static product site in `dist/site`.
 
-## Develop and verify
+## Run and verify
 
-Requires Node 22+ and Rust only for the desktop wrapper.
-
-```sh
-npm install
-npm run dev             # browser workspace at localhost:5173
-npm test                # reconciliation unit tests
-npm run test:ui         # Playwright workflow + axe smoke scan
-npm run build           # static landing site → dist/site
-npm run build:app       # Tauri frontend → dist/app
-npm run tauri dev       # native desktop development window
-```
-
-The Linux Tauri build needs WebKit/GTK headers; GitHub Actions installs them for release builds. The release workflow runs on a version tag and publishes macOS (`.dmg`, arm64 and x86_64), Windows (`.msi`/`.exe`), and Linux (`.AppImage`/`.deb`) assets, `SHA256SUMS`, and `latest.json`.
-
-## Install
-
-On the published site, choose the detected-platform download. The unsigned release scripts verify `SHA256SUMS` before installing/downloading:
+Requires Node 22+, Rust, and (on Linux) the GTK/WebKit packages installed in `.github/workflows/release.yml`.
 
 ```sh
-curl -fsSL https://stocktake-reconcile.sociobot.in/install.sh | sh
-irm https://stocktake-reconcile.sociobot.in/install.ps1 | iex
+npm ci
+npm test
+npx tsc --noEmit
+npm run test:ui
+npm run build
+npm run build:app
+cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+cargo check --locked --manifest-path src-tauri/Cargo.toml
 ```
 
-Windows and macOS binaries are unsigned in v1. On macOS use right-click → Open on first launch; Windows may show a SmartScreen warning.
+For a local Linux package build:
 
-## Privacy and licensing
+```sh
+CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb
+```
 
-Inventory files remain local. There is no analytics or telemetry. The free tool includes imports and both exports. The optional one-time Pro Archive license stores an on-device summary library of report hashes; it uses Sociobot/Dodo checkout and can be restored by pasting its token. See `/privacy/` and `/terms/`.
+The tag-triggered GitHub Actions workflow builds macOS `.dmg`, Windows `.msi`/`.exe`, and Linux `.AppImage`/`.deb` files, then publishes `SHA256SUMS` and `latest.json`. Release artifact names and manifests are sorted deterministically; build time is fixed to the tagged commit timestamp. The Tauri wrapper enables AppImage extraction on Linux so the same command works in FUSE-restricted containers.
+
+## Privacy and deployment
+
+Inventory data remains in the browser or desktop app. The product has no analytics, telemetry, inventory sync, payment flow, or runtime third-party requests. The static site is deployed from `dist/site`; its routing, security headers, and immutable asset caching are in `staticwebapp.config.json`.
+
+See `/privacy/`, `/terms/`, [`.factory/demo.md`](.factory/demo.md), and [`.factory/claims.json`](.factory/claims.json).
 
 ## License
 

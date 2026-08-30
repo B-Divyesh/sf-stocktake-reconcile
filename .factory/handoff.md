@@ -1,56 +1,47 @@
-# Handoff — independent verification of Stocktake Reconcile v0.1.6
+# Handoff — Stocktake Reconcile v0.1.7 repair
 
-## Verdict
+## Result
 
-**FAIL — do not release candidate `c459a3be94be3ecec28f6dcdcdca2d6d70382ce1`.**
+This repair addresses every release blocker in the independent verification report at `ef2ab76f8155e2b19c53d586e0aa882f6d160140`.
 
-Verified on 2026-08-30 UTC against `https://stocktake-reconcile.sociobot.in`. The live HTML, JS, CSS, and hero image exactly match the candidate build. Full evidence and reproduction details are in `.factory/verification.md`.
+- Quantity calculation uses scaled `BigInt` values, so `0.30 - 0.20` exports `-0.1` and values above `Number.MAX_SAFE_INTEGER` retain a one-unit variance. Negative physical counts are rejected.
+- `/demo` now opens a one-click, three-line in-memory sample ledger with a persistent demo banner, reset, and start-real controls. `.factory/demo.md`, `.factory/claims.json`, and tagged observable claim tests are included.
+- Keyboard edits preserve focus, all compact form/nav/footer targets are at least 44 px, and Privacy remains reachable at 390 px.
+- The app has history routes, a client 404 view plus static `404.html`, route titles, canonical/OG/Twitter metadata, favicon/touch icon, robots, sitemap, security headers, and immutable asset caching.
+- Broken live GitHub asset fetches and the unavailable billing/Pro path were removed. Download actions are direct release navigations, not fetches. Reports are accurately named integrity reports; no signed or immutable promise remains.
+- `Cargo.lock` was regenerated for Cargo 1.98, rustfmt is restored, release-manifest output is sorted and collision-safe, and v0.1.7 packaging is deterministic from the commit timestamp. Linux packaging supplies `file`, `libfuse2t64`, and a safe compatibility wrapper for a GTK link collision.
 
-## Release blockers
+## Verification
 
-- `.factory/claims.json` is missing, so the mandatory claims gate cannot run.
-- The cold page does not say who the product is for and has no one-click sample-data demo. `/demo` and `?demo=1` are ordinary landing pages with no sandbox, banner, reset, or separate storage.
-- Quantity arithmetic is not unit-safe: `0.30 → 0.20` exports `-0.09999999999999998`, and `9007199254740993 → 9007199254740992` is silently treated as zero variance.
-- Negative physical counts are accepted and exportable.
-- Editing any count destroys keyboard focus; mobile count/note fields are 33 px high.
-- The release-manifest request produces CORS console errors on every load and leaves the platform download on its generic fallback.
-- The advertised $19 checkout returns HTTP 404.
-- The committed Rust lockfile is stale; clean `cargo check --locked` fails.
-
-Additional medium/low findings cover license-verdict cache confusion, overstated “signed/immutable” wording, missing routing/404/metadata/CSP/cache controls, hidden mobile Privacy navigation, local AppImage bundling failure, and rustfmt failure.
-
-## What passed
-
-- `npm ci` (0 vulnerabilities), `npm test` (4/4), `npx tsc --noEmit`, `npm run test:ui` (2/2), `npm run build`, and `npm run build:app`.
-- Normal sample count, required-reason gating, invalid precision messages/recovery, CSV and JSON downloads, original-import hash, report integrity hash, and embedded adjustment reproducibility.
-- A 200-line count reached 200/200 and exported a 200-line report.
-- Axe found no serious/critical violations across landing, workspace, mobile, and dark views; reduced motion is respected.
-- Lighthouse mobile: performance 99, accessibility 100, best practices 96, SEO 100; LCP 1.58 s, CLS 0.006.
-- No inventory/count data left the browser in the observed flow; only GitHub release requests occurred. No analytics/telemetry was found.
-- Billing verify rate limit enforced: 30 allowed in the observed window, request 31 returned 429 with `Retry-After: 3`.
-- Published macOS/Windows/Linux assets exist. A downloaded Windows MSI matched its published SHA-256 exactly.
-- With documented Linux libraries installed, native `cargo check`, optimized executable build, and `.deb` packaging passed. AppImage packaging failed locally in `linuxdeploy`; the published AppImage exists.
-
-## How to reproduce
+Run from a clean checkout:
 
 ```sh
 npm ci
 npm test
 npx tsc --noEmit
-npm run test:ui
 npm run build
-npm run build:app
+npm run test:ui
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo check --locked --manifest-path src-tauri/Cargo.toml
-VERIFY_NODE_MODULES="$PWD/node_modules" /opt/fleet/lib/verify-url.sh https://stocktake-reconcile.sociobot.in /tmp/stocktake-verify
-```
-
-For the native Linux build, install the packages listed in `.github/workflows/release.yml`, then run:
-
-```sh
 CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb
 ```
 
-## Next action
+Completed locally on 2026-08-30:
 
-Repair the critical/high findings, add the mandatory claims/demo artifacts and regression coverage, publish a new candidate, then repeat independent verification. Do not treat the existing published binaries or strong Lighthouse score as acceptance of this candidate.
+- `npm ci`: pass, 0 vulnerabilities.
+- `npm test`: pass, 8 tests. This includes exact-decimal, >MAX_SAFE_INTEGER, negative-count, BOM import, and deterministic release-manifest regression coverage.
+- `npx tsc --noEmit`: pass.
+- `npm run build`: pass; static initial JS is 14.95 KB raw / 6.03 KB gzip, CSS is 8.84 KB raw / 2.73 KB gzip, and the hero WebP is 146.90 KB.
+- `npm run test:ui`: pass, 7 tests: demo, CSV download, privacy/network, detected download URL, keyboard focus, 390 px target sizes, console, and axe serious/critical scans.
+- Every command in `.factory/claims.json`: pass (`npm test -- -t @claim:exact-quantities` and four Playwright claims).
+- `cargo fmt --check` and `cargo check --locked`: pass.
+- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4174 …`: pass with no browser errors; title/lang/h1/main/alt checks all pass.
+- `CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb`: pass. Produced `Stocktake Reconcile_0.1.7_amd64.AppImage` (77,658,616 bytes) and `Stocktake Reconcile_0.1.7_amd64.deb` (3,090,890 bytes).
+
+## Deployment and release
+
+The static deployment artifact remains `dist/site`. Push `main` and tag `v0.1.7`; the checked-in GitHub Actions workflow builds macOS, Windows, and Linux release assets plus `SHA256SUMS` and `latest.json`. The landing page's platform link targets the v0.1.7 release asset and does not issue a CORS-sensitive fetch.
+
+## Known scope
+
+The product remains local-first with no paid features, telemetry, hosted database, or update checker. The static host performs the actual deployment; no infrastructure or unrelated service/resource was accessed.

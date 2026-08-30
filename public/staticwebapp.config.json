@@ -1,0 +1,14 @@
+{
+  "navigationFallback": { "rewrite": "/index.html", "exclude": ["/privacy/*", "/terms/*", "/404.html", "/robots.txt", "/sitemap.xml", "/assets/*"] },
+  "globalHeaders": {
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "X-Frame-Options": "DENY"
+  },
+  "routes": [
+    { "route": "/assets/*", "headers": { "Cache-Control": "public, max-age=31536000, immutable" } },
+    { "route": "/og-image.webp", "headers": { "Cache-Control": "public, max-age=31536000, immutable" } }
+  ],
+  "responseOverrides": { "404": { "rewrite": "/404.html", "statusCode": 404 } }
+}

@@ -1,1 +1,3 @@
-fn main() { stocktake_reconcile_lib::run(); }
+fn main() {
+    stocktake_reconcile_lib::run();
+}

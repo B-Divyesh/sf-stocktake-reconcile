@@ -40,30 +40,41 @@ export function parseCsv(text: string): string[][] {
   return rows.filter(r => r.some(c => c.trim() !== ''))
 }
 
+/** Values are scaled integers, never JavaScript floating-point numbers. */
 export function decimalError(value: string, unitType: UnitType, precision: number): string | null {
   const trimmed = value.trim()
   if (!trimmed) return 'Enter the physical count.'
-  if (!/^-?\d+(?:\.\d+)?$/.test(trimmed)) return 'Use a number, without commas or rounding.'
+  if (!/^\d+(?:\.\d+)?$/.test(trimmed)) return 'Use a non-negative number, without commas or rounding.'
   if (unitType === 'integer' && trimmed.includes('.')) return 'This unit accepts whole numbers only.'
   const decimals = (trimmed.split('.')[1] || '').length
   if (decimals > precision) return `This unit allows at most ${precision} decimal place${precision === 1 ? '' : 's'}; nothing was rounded.`
   return null
 }
 
-export function variance(line: CountLine): number | null {
-  if (decimalError(line.counted, line.unitType, line.precision)) return null
-  return Number(line.counted) - Number(line.expected)
+function scaled(value: string, precision: number): bigint {
+  const [whole, fraction = ''] = value.trim().split('.')
+  return BigInt(whole + fraction.padEnd(precision, '0'))
 }
 
-export function formatQuantity(value: number, precision: number): string {
-  return value.toLocaleString(undefined, { maximumFractionDigits: precision, minimumFractionDigits: 0 })
+export function variance(line: CountLine): bigint | null {
+  if (decimalError(line.counted, line.unitType, line.precision) || decimalError(line.expected, line.unitType, line.precision)) return null
+  return scaled(line.counted, line.precision) - scaled(line.expected, line.precision)
+}
+
+export function formatQuantity(value: bigint, precision: number): string {
+  const negative = value < 0n
+  const digits = (negative ? -value : value).toString().padStart(precision + 1, '0')
+  if (precision === 0) return `${negative ? '-' : ''}${digits}`
+  const whole = digits.slice(0, -precision)
+  const fraction = digits.slice(-precision).replace(/0+$/, '')
+  return `${negative ? '-' : ''}${whole}${fraction ? `.${fraction}` : ''}`
 }
 
 export function importInventory(text: string): ImportResult {
   let matrix: string[][]
   try { matrix = parseCsv(text) } catch (error) { return { lines: [], errors: [error instanceof Error ? error.message : 'Could not read CSV.'] } }
   if (matrix.length < 2) return { lines: [], errors: ['Add a header row and at least one inventory line.'] }
-  const headers = matrix[0].map(h => h.trim().toLowerCase())
+  const headers = matrix[0].map(h => h.replace(/^\uFEFF/, '').trim().toLowerCase())
   const hasExpected = headers.some(h => ['expected', 'expected quantity', 'on hand', 'on_hand'].includes(h))
   if (!hasExpected) return { lines: [], errors: ['Missing an expected column. Use: sku, name, expected, unit, unit_type, precision.'] }
   const lines: CountLine[] = [], errors: string[] = []
@@ -76,7 +87,7 @@ export function importInventory(text: string): ImportResult {
     if (!['integer', 'decimal', 'weight'].includes(unitType)) errors.push(`Row ${index + 2}: unit_type must be integer, decimal, or weight.`)
     if (!Number.isInteger(precision) || precision < 0 || precision > 8) errors.push(`Row ${index + 2}: precision must be a whole number from 0 to 8.`)
     if (!field(row, ['sku', 'item code', 'code'])) errors.push(`Row ${index + 2}: missing sku.`)
-    if (decimalError(expected, unitType, precision)) errors.push(`Row ${index + 2}: expected quantity is not valid for its unit/precision.`)
+    if (decimalError(expected, unitType, precision)) errors.push(`Row ${index + 2}: expected quantity must be a non-negative value valid for its unit and precision.`)
     lines.push({
       id: crypto.randomUUID(), sku: field(row, ['sku', 'item code', 'code']), name: field(row, ['name', 'item', 'product']) || 'Unnamed item',
       expected, counted: '', unit: field(row, ['unit', 'uom']) || 'each', unitType: ['integer', 'decimal', 'weight'].includes(unitType) ? unitType : 'decimal',
@@ -87,9 +98,12 @@ export function importInventory(text: string): ImportResult {
 }
 
 export function toCsv(lines: CountLine[]): string {
-  const quote = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
+  const quote = (value: string) => `"${value.replaceAll('"', '""')}"`
   const header = ['sku', 'name', 'expected', 'counted', 'variance', 'unit', 'unit_type', 'reason', 'note']
-  const body = lines.filter(l => variance(l) !== null && variance(l) !== 0).map(line => [line.sku, line.name, line.expected, line.counted, variance(line)!, line.unit, line.unitType, line.reason, line.note].map(quote).join(','))
+  const body = lines.flatMap(line => {
+    const diff = variance(line)
+    return diff === null || diff === 0n ? [] : [[line.sku, line.name, line.expected, line.counted, formatQuantity(diff, line.precision), line.unit, line.unitType, line.reason, line.note].map(quote).join(',')]
+  })
   return [header.join(','), ...body].join('\r\n')
 }
 
