@@ -1,40 +1,56 @@
-# Handoff — Stocktake Reconcile v0.1.6
+# Handoff — independent verification of Stocktake Reconcile v0.1.6
 
-## Delivered
+## Verdict
 
-- Tauri 2 desktop shell with a local-first TypeScript reconciliation workspace.
-- Expected-stock CSV import with explicit unit types (`integer`, `decimal`, `weight`) and precision validation; no count is rounded.
-- Required reason for every non-zero variance; exported adjustment CSV includes the unit, unit type, reason and note.
-- Integrity-hashed JSON count report containing the exact original CSV, its SHA-256, all count lines, and the adjustment CSV so it can be reproduced.
-- Static landing site in `dist/site`, responsive at 390px, with OS-aware release links, a one-time Pro Archive license restore/verify flow, `/privacy/`, `/terms/`, and checksum-verifying install scripts.
-- GitHub tag-release workflow: macOS arm64/x86_64 `.dmg`, Windows `.msi`/`.exe`, Linux `.AppImage`/`.deb`, `SHA256SUMS`, and `latest.json`.
-- Original generated ledger illustration at `assets/src/notebook-hero.webp` (146.9 KB) and documented provenance in `.factory/design.md`.
+**FAIL — do not release candidate `c459a3be94be3ecec28f6dcdcdca2d6d70382ce1`.**
 
-## Verification
+Verified on 2026-08-30 UTC against `https://stocktake-reconcile.sociobot.in`. The live HTML, JS, CSS, and hero image exactly match the candidate build. Full evidence and reproduction details are in `.factory/verification.md`.
 
-Ran successfully:
+## Release blockers
+
+- `.factory/claims.json` is missing, so the mandatory claims gate cannot run.
+- The cold page does not say who the product is for and has no one-click sample-data demo. `/demo` and `?demo=1` are ordinary landing pages with no sandbox, banner, reset, or separate storage.
+- Quantity arithmetic is not unit-safe: `0.30 → 0.20` exports `-0.09999999999999998`, and `9007199254740993 → 9007199254740992` is silently treated as zero variance.
+- Negative physical counts are accepted and exportable.
+- Editing any count destroys keyboard focus; mobile count/note fields are 33 px high.
+- The release-manifest request produces CORS console errors on every load and leaves the platform download on its generic fallback.
+- The advertised $19 checkout returns HTTP 404.
+- The committed Rust lockfile is stale; clean `cargo check --locked` fails.
+
+Additional medium/low findings cover license-verdict cache confusion, overstated “signed/immutable” wording, missing routing/404/metadata/CSP/cache controls, hidden mobile Privacy navigation, local AppImage bundling failure, and rustfmt failure.
+
+## What passed
+
+- `npm ci` (0 vulnerabilities), `npm test` (4/4), `npx tsc --noEmit`, `npm run test:ui` (2/2), `npm run build`, and `npm run build:app`.
+- Normal sample count, required-reason gating, invalid precision messages/recovery, CSV and JSON downloads, original-import hash, report integrity hash, and embedded adjustment reproducibility.
+- A 200-line count reached 200/200 and exported a 200-line report.
+- Axe found no serious/critical violations across landing, workspace, mobile, and dark views; reduced motion is respected.
+- Lighthouse mobile: performance 99, accessibility 100, best practices 96, SEO 100; LCP 1.58 s, CLS 0.006.
+- No inventory/count data left the browser in the observed flow; only GitHub release requests occurred. No analytics/telemetry was found.
+- Billing verify rate limit enforced: 30 allowed in the observed window, request 31 returned 429 with `Retry-After: 3`.
+- Published macOS/Windows/Linux assets exist. A downloaded Windows MSI matched its published SHA-256 exactly.
+- With documented Linux libraries installed, native `cargo check`, optimized executable build, and `.deb` packaging passed. AppImage packaging failed locally in `linuxdeploy`; the published AppImage exists.
+
+## How to reproduce
 
 ```sh
+npm ci
 npm test
+npx tsc --noEmit
 npm run test:ui
 npm run build
 npm run build:app
+cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
+cargo check --locked --manifest-path src-tauri/Cargo.toml
+VERIFY_NODE_MODULES="$PWD/node_modules" /opt/fleet/lib/verify-url.sh https://stocktake-reconcile.sociobot.in /tmp/stocktake-verify
 ```
 
-Results: 4 unit tests pass; 2 Playwright tests pass (full count-to-export-ready flow and axe serious/critical scan); static JS is 16.06 KB raw / 6.43 KB gzip, CSS 8.85 KB raw / 2.73 KB gzip, hero WebP 146.9 KB. The page has title/lang/main, exactly one h1 per view, skip link, keyboard-native controls, visible focus styling, semantic labelled inputs, dark mode, and reduced-motion support. A Lighthouse run was attempted with the container Chromium but its screenshot target closed during collection; the lightweight bundle and axe scan are the available local performance/accessibility evidence.
+For the native Linux build, install the packages listed in `.github/workflows/release.yml`, then run:
 
-`cargo check --manifest-path src-tauri/Cargo.toml` reached the native GTK dependency stage but this disposable worker lacks `glib-2.0` development headers. The release workflow installs the required Linux WebKit/GTK packages before Tauri builds.
+```sh
+CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb
+```
 
-## How to release
+## Next action
 
-Published release: [v0.1.6](https://github.com/B-Divyesh/sf-stocktake-reconcile/releases/tag/v0.1.6). The GitHub Actions run completed successfully for macOS arm64/x86_64, Windows x64, and Linux x64. Its `latest.json` contains real per-platform release URLs; downloading the Windows MSI and comparing SHA-256 confirmed `5b76d25b5f0541c7653a6fedcf32d485ad1b773e86447033b2c1cb827edf61e8`, matching its `SHA256SUMS` entry. Future version tags run `.github/workflows/release.yml` to rebuild and publish the same artifact set.
-
-## Needs operator action
-
-- Release assets are intentionally unsigned. For signed distribution, provide `APPLE_CERTIFICATE` (and related Apple signing/notarization values) plus `WINDOWS_CERT_PFX` to the GitHub repository, then extend the workflow signing steps with the certificate password/secrets used by the operator.
-- Register the billing product before production checkout if it has not already been registered. The source deliberately uses the slug, never a hardcoded product ID.
-
-## Known gaps
-
-- The free v1 keeps the active worksheet in memory until its signed report is exported; it does not retain an editable draft across an app restart. This protects local-first behavior and keeps v1 focused on the physical count → audited export workflow.
-- The Pro Archive stores metadata locally only; reports themselves remain user-controlled exports.
+Repair the critical/high findings, add the mandatory claims/demo artifacts and regression coverage, publish a new candidate, then repeat independent verification. Do not treat the existing published binaries or strong Lighthouse score as acceptance of this candidate.
