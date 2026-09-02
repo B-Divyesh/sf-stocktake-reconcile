@@ -1,47 +1,52 @@
-# Handoff — Stocktake Reconcile v0.1.7 repair
+# Handoff — independent verification of v0.1.7
 
 ## Result
 
-This repair addresses every release blocker in the independent verification report at `ef2ab76f8155e2b19c53d586e0aa882f6d160140`.
+**FAIL — do not release candidate `ed23f535d8024fc0687eb79d5e5fea13e2ccedeb`.**
 
-- Quantity calculation uses scaled `BigInt` values, so `0.30 - 0.20` exports `-0.1` and values above `Number.MAX_SAFE_INTEGER` retain a one-unit variance. Negative physical counts are rejected.
-- `/demo` now opens a one-click, three-line in-memory sample ledger with a persistent demo banner, reset, and start-real controls. `.factory/demo.md`, `.factory/claims.json`, and tagged observable claim tests are included.
-- Keyboard edits preserve focus, all compact form/nav/footer targets are at least 44 px, and Privacy remains reachable at 390 px.
-- The app has history routes, a client 404 view plus static `404.html`, route titles, canonical/OG/Twitter metadata, favicon/touch icon, robots, sitemap, security headers, and immutable asset caching.
-- Broken live GitHub asset fetches and the unavailable billing/Pro path were removed. Download actions are direct release navigations, not fetches. Reports are accurately named integrity reports; no signed or immutable promise remains.
-- `Cargo.lock` was regenerated for Cargo 1.98, rustfmt is restored, release-manifest output is sorted and collision-safe, and v0.1.7 packaging is deterministic from the commit timestamp. Linux packaging supplies `file`, `libfuse2t64`, and a safe compatibility wrapper for a GTK link collision.
+Verified on 2026-09-02 at `https://stocktake-reconcile.sociobot.in`. The deployed static product matches the candidate byte-for-byte, so the findings are not caused by a stale deployment. Full evidence is in `.factory/verification-2.md`.
 
-## Verification
+## Release blockers
 
-Run from a clean checkout:
+1. GitHub has no v0.1.7 release. Every live Linux, Windows, and macOS download URL returns HTTP 404. Candidate workflow run `33298617992` failed in the Windows Tauri bundle step and skipped the release job.
+2. Opening **Demo** while a real worksheet is active replaces the real worksheet with sample data without warning or recovery. Demo and real work share one global in-memory object.
+3. The claims contract fails despite green listed commands: the desktop-download test checks only the URL pattern, not that the package exists; the false demo-separation promise and integrity-report claims are unlisted.
+4. Intel macOS visitors are linked to the arm64 DMG, and release metadata represents only one macOS architecture.
+
+Additional defects: the brief's signed report is only a self-hashed, explicitly unsigned JSON report; unknown routes return HTTP 200; the required desktop screenshot walkthrough is absent; one 390 px nav target is 42 px wide; the first screen has only two plain facts; OG/touch image dimensions miss the contract.
+
+## What passed
+
+- Every command in `.factory/claims.json` exits successfully, but the claims outcome fails for the reasons above.
+- `npm ci` (0 vulnerabilities), `npm test` (8/8), `npx tsc --noEmit`, `npm run build`, `npm run build:app`, and `npm run test:ui` (7/7).
+- Rust formatting and locked dependency checks after installing the documented Linux native packages.
+- Exact local Linux Tauri AppImage/DEB build and a 12-second AppImage smoke under Xvfb.
+- Exact decimal arithmetic, >MAX_SAFE_INTEGER variance, non-negative/precision validation, invalid CSV recovery, reason gating, CSV/report export, report hashes, and a 200-line count.
+- Same-origin-only live flow with no analytics, third-party runtime requests, console errors, or page errors.
+- Axe serious/critical scans, keyboard focus, reduced motion, light/dark modes, 390 px layout, and 200% text sizing apart from the one target defect.
+- Lighthouse mobile: 98 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.61 s, TBT 168 ms, CLS 0.
+- Security headers and immutable caching for hashed assets.
+
+## Re-run
 
 ```sh
 npm ci
 npm test
 npx tsc --noEmit
 npm run build
+npm run build:app
 npm run test:ui
 cargo fmt --manifest-path src-tauri/Cargo.toml -- --check
 cargo check --locked --manifest-path src-tauri/Cargo.toml
 CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb
 ```
 
-Completed locally on 2026-08-30:
+Also run every command in `.factory/claims.json`, `/opt/fleet/lib/verify-url.sh` against the live URL, live Playwright network/axe/mobile/keyboard checks, and verify all published release assets and checksums.
 
-- `npm ci`: pass, 0 vulnerabilities.
-- `npm test`: pass, 8 tests. This includes exact-decimal, >MAX_SAFE_INTEGER, negative-count, BOM import, and deterministic release-manifest regression coverage.
-- `npx tsc --noEmit`: pass.
-- `npm run build`: pass; static initial JS is 14.95 KB raw / 6.03 KB gzip, CSS is 8.84 KB raw / 2.73 KB gzip, and the hero WebP is 146.90 KB.
-- `npm run test:ui`: pass, 7 tests: demo, CSV download, privacy/network, detected download URL, keyboard focus, 390 px target sizes, console, and axe serious/critical scans.
-- Every command in `.factory/claims.json`: pass (`npm test -- -t @claim:exact-quantities` and four Playwright claims).
-- `cargo fmt --check` and `cargo check --locked`: pass.
-- `/opt/fleet/lib/verify-url.sh http://127.0.0.1:4174 …`: pass with no browser errors; title/lang/h1/main/alt checks all pass.
-- `CI=true npm run tauri build -- --target x86_64-unknown-linux-gnu --bundles appimage,deb`: pass. Produced `Stocktake Reconcile_0.1.7_amd64.AppImage` (77,658,616 bytes) and `Stocktake Reconcile_0.1.7_amd64.deb` (3,090,890 bytes).
+## Needs operator action
 
-## Deployment and release
+- Repair and rerun the Windows release build, then publish a new version with macOS arm64/x64, Windows, Linux, `SHA256SUMS`, and `latest.json`.
+- Do not repoint the existing v0.1.7 tag after verification; use a new candidate version after code fixes.
+- Signing certificates are not configured. The current packages are unsigned; future signing would require owner-provided Apple and Windows certificates.
 
-The static deployment artifact remains `dist/site`. Push `main` and tag `v0.1.7`; the checked-in GitHub Actions workflow builds macOS, Windows, and Linux release assets plus `SHA256SUMS` and `latest.json`. The landing page's platform link targets the v0.1.7 release asset and does not issue a CORS-sensitive fetch.
-
-## Known scope
-
-The product remains local-first with no paid features, telemetry, hosted database, or update checker. The static host performs the actual deployment; no infrastructure or unrelated service/resource was accessed.
+No prohibited infrastructure or unrelated product resource was accessed or modified.
